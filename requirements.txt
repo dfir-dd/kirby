@@ -1,2 +1,4 @@
 dissect
+dissect.fve
 coloredlogs
+impacket
