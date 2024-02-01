@@ -19,6 +19,14 @@ class HostAnalyzer:
         self.__dst_dir = self.__create_destination_directory()
         self.__PLUGINS = [
             "amcache_install",
+            "adpolicy",
+            "sophos",
+            "mcafee",
+            "trendmicro",
+            #"symantec" # => Error
+            #("defender", "evtx"), => unsightly output -> better with evtx2bodyfile/mactime2
+            ("anydesk", "logs"), 
+            ("teamviewer", "logs"), 
             "powershell_history",
             "prefetch",
             "runkeys",
@@ -27,18 +35,23 @@ class HostAnalyzer:
             "firewall",
             "adpolicy",
             "shimcache",
+            # "evtx", # => unsightly output -> better with evtx2bodyfile/mactime2
             "muicache",
-            ## "user_details", # SEGV
+            # "user_details", # SEGV
             "activitiescache",
             "bam",
             "services",
             "shellbags",
+            "shimcache",
             "startupinfo",
             "tasks",
             "trusteddocs",
             ("edge", "history"),
             ("chrome", "history"),
             ("firefox", "history"),
+            ("iexplore", "history"),
+            ##"lnk", # => Error
+            ## "mft", # => unsightly output -> better with mft2bodyfile/mactime2
             ##"wer", # https://github.com/fox-it/acquire/pull/66
             ##"usnjrnl" # takes a lot of time
         ]
@@ -84,6 +97,7 @@ class HostAnalyzer:
                                exclude=["hostname", "domain", "_generated", "_source", "_classification", "_version"])
 
         for entry in records:
+            #logger().info(f"Enty {entry} in Records {records}")
             writer.write(entry)
 
     def __create_destination_directory(self):
