@@ -17,3 +17,8 @@ options:
   --dialect {excel,excel-tab,unix}
                         select CSV dialect
 ```
+
+## Output
+Directory (named by the hostname of the image) including:
+- hostname.txt - with information of hostname, domain, windows version, install date, language, timezone, ips and users
+- otheroutput of different plugins (TODO)
