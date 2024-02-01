@@ -3,3 +3,4 @@ dissect.fve
 coloredlogs
 impacket
 carbon-black-cloud-sdk
+yara-python
