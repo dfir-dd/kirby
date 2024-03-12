@@ -2,7 +2,6 @@ import os
 import shutil
 import sys
 import traceback
-import coloredlogs
 
 import dissect
 from dissect.target import Target
@@ -11,8 +10,6 @@ from flow.record.adapter.csvfile import CsvfileWriter
 
 from utils import TxtFile
 from utils.cli import logger
-
-coloredlogs.install(level='DEBUG')
 
 class HostAnalyzer:
     def __init__(self, image_path: str, overwrite: bool = False):
