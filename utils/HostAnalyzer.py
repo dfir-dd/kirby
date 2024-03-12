@@ -1,6 +1,8 @@
 import os
 import shutil
 import sys
+import traceback
+import coloredlogs
 
 import dissect
 from dissect.target import Target
@@ -9,6 +11,8 @@ from flow.record.adapter.csvfile import CsvfileWriter
 
 from utils import TxtFile
 from utils.cli import logger
+
+coloredlogs.install(level='DEBUG')
 
 class HostAnalyzer:
     def __init__(self, image_path: str, overwrite: bool = False):
@@ -88,8 +92,9 @@ class HostAnalyzer:
             logger().info(f"run of {plugin} was successful")
         except UnsupportedPluginError as e:
             logger().warning(f"{plugin}: {e.root_cause_str()}")
-        except Exception as e:
-            logger().warning(f"{plugin}: An unexpected error occurred: {type(e).__name__} - {e}")
+        except Exception:
+            tb_str = traceback.format_exc()
+            logger().error(f"{plugin}: An unexpected error occurred:\r\n {tb_str}")
 
     def write_csv(self, filename, records):
         if not filename.endswith(".csv"):
