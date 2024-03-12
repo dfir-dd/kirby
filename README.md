@@ -1,10 +1,10 @@
-# quicktimeline
-create a timeline of a windows image, using dissect
+# kirby
+A cute script to create a timeline of a windows image, using dissect
 
 ## Usage
 
 ```
-usage: windows-timeline [-h] [--overwrite] [--dialect {excel,excel-tab,unix}] image_path
+usage: kirby [-h] [--overwrite] [--dialect {excel,excel-tab,unix}] image_path
 
 create a timeline of a windows image, using dissect
 

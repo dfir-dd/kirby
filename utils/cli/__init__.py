@@ -11,7 +11,7 @@ __LOGGER__ = None
 def logger():
     global __LOGGER__
     if not __LOGGER__:
-        __LOGGER__ = logging.getLogger("windows-timeline")
+        __LOGGER__ = logging.getLogger("kirby")
         coloredlogs.install(level='INFO', logger=__LOGGER__)
 
     return __LOGGER__
@@ -19,7 +19,7 @@ def logger():
 
 def arguments():
     parser = argparse.ArgumentParser(
-        prog="windows-timeline",
+        prog="kirby",
         description="create a timeline of a windows image, using dissect"
     )
     parser.add_argument('image_path')
