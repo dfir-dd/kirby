@@ -88,6 +88,8 @@ class HostAnalyzer:
             logger().info(f"run of {plugin} was successful")
         except UnsupportedPluginError as e:
             logger().warning(f"{plugin}: {e.root_cause_str()}")
+        except Exception as e:
+            logger().warning(f"{plugin}: An unexpected error occurred: {type(e).__name__} - {e}")
 
     def write_csv(self, filename, records):
         if not filename.endswith(".csv"):
