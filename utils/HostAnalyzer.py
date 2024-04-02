@@ -18,7 +18,6 @@ from utils.cli import logger
 class HostAnalyzer:
     def __init__(self, image_path: str, overwrite: bool = False):
         super(HostAnalyzer, self).__init__()
-        self.path = image_path
         self.__target = Target.open(image_path)
         self.__target.apply()
         self.__overwrite = overwrite
