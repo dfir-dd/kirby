@@ -1,15 +1,15 @@
 # kirby
-A cute script to create a timeline of a windows image, using dissect
+A cute script to parse several forensic artifacts of given windows (triage) images, using dissect
 
 ## Usage
 
 ```
-usage: kirby [-h] [--overwrite] [--dialect {excel,excel-tab,unix}] image_path
+usage: kirby [-h] [--overwrite] [--dialect {excel,excel-tab,unix}] [TARGETS ...]
 
-create a timeline of a windows image, using dissect
+parse forensic artifacts from windows images, using dissect
 
 positional arguments:
-  image_path
+  TARGETS               Path to single target or directory with multiple targets to parse
 
 options:
   -h, --help            show this help message and exit
@@ -19,6 +19,8 @@ options:
 ```
 
 ## Output
-Directory (named by the hostname of the image) including:
-- hostname.txt - with information of hostname, domain, windows version, install date, language, timezone, ips and users
-- otheroutput of different plugins (TODO)
+
+- hostinfo.csv - hostinfo of all targets parsed
+- Directory (named by the hostname of the image) including:
+  - hostinfo_\<hostname\>.csv - with information of hostname, domain, windows version, install date, language, timezone, ips and users
+  - otheroutput of different plugins (TODO)
