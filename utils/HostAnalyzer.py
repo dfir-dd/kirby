@@ -35,10 +35,11 @@ InfoRecord = TargetRecordDescriptor(
 
 class HostAnalyzer:
     
-    def __init__(self, targets: str, overwrite: bool = False):
+    def __init__(self, targets: str, output:str, overwrite: bool = False):
         super(HostAnalyzer, self).__init__()
         self.__overwrite = overwrite
         self.__targets = targets
+        self.__output_directory = output
         self.__PLUGINS = [
             "amcache_install",
             "adpolicy",
@@ -83,7 +84,7 @@ class HostAnalyzer:
     # will enumerate all targets and create hostinfo as well as invoke all plugins for each target     
     def analyze_targets(self):
         filename = "hostinfo.csv"
-        writer = CsvfileWriter(filename,
+        writer = CsvfileWriter(os.path.join(self.__output_directory, filename),
                                exclude=["_generated", "_source", "_classification", "_version"])
 
         try:
@@ -129,7 +130,7 @@ class HostAnalyzer:
         if not filename.endswith(".csv"):
             filename += ".csv"
 
-        writer = CsvfileWriter(os.path.join(self.__dst_dir, filename),
+        writer = CsvfileWriter(os.path.join(self.__output_directory, self.__dst_dir, filename),
                                exclude=["hostname", "domain", "_generated", "_source", "_classification", "_version"])
 
         for entry in records:
@@ -139,7 +140,7 @@ class HostAnalyzer:
 
     def __create_destination_directory(self, target: Target):
         logger().info(f"found image with hostname '{target.hostname}'; creating target directory for it")
-        dst = os.path.join(os.curdir, target.hostname)
+        dst = os.path.join(self.__output_directory, target.hostname)
         if os.path.exists(dst):
             if self.__overwrite:
                 logger().info(f"target directory '{dst}' exists already, deleting it")
@@ -156,7 +157,7 @@ class HostAnalyzer:
         try:
             record = InfoRecord(**get_target_info(target), _target=target)
             filename = "hostinfo_" + target.hostname + ".csv"
-            writer = CsvfileWriter(os.path.join(self.__dst_dir, filename),
+            writer = CsvfileWriter(os.path.join(self.__output_directory, self.__dst_dir, filename),
                                exclude=["_generated", "_source", "_classification", "_version"])
             writer.write(record)
         except Exception as e:
