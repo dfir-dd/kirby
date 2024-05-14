@@ -35,7 +35,7 @@ InfoRecord = TargetRecordDescriptor(
 
 class HostAnalyzer:
     
-    def __init__(self, targets: str, overwrite: bool = False):
+    def __init__(self, targets: list, overwrite: bool = False):
         super(HostAnalyzer, self).__init__()
         self.__overwrite = overwrite
         self.__targets = targets
@@ -87,12 +87,12 @@ class HostAnalyzer:
                                exclude=["_generated", "_source", "_classification", "_version"])
 
         try:
-            for i, target in enumerate(Target.open_all(self.__targets)):
+            for target in Target.open_all(self.__targets):
                 try:
                     self.__dst_dir = self.__create_destination_directory(target)
                     record = InfoRecord(**get_target_info(target), _target=target)
                     writer.write(record)
-                    self.write_target_info(target)
+                    self.__write_target_info(target)
                     self.invoke_plugins(target)
                 except Exception as e:
                     target.log.error(f"Exception in retrieving information for target: `%s`.: {e}", target)
@@ -151,11 +151,11 @@ class HostAnalyzer:
         return dst
 
 
-    def write_target_info(self, target: Target):
+    def __write_target_info(self, target: Target):
         
         try:
             record = InfoRecord(**get_target_info(target), _target=target)
-            filename = "hostinfo_" + target.hostname + ".csv"
+            filename = f"hostinfo_{target.hostname}.csv"
             writer = CsvfileWriter(os.path.join(self.__dst_dir, filename),
                                exclude=["_generated", "_source", "_classification", "_version"])
             writer.write(record)

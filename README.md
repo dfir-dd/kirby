@@ -23,4 +23,4 @@ options:
 - hostinfo.csv - hostinfo of all targets parsed
 - Directory (named by the hostname of the image) including:
   - hostinfo_\<hostname\>.csv - with information of hostname, domain, windows version, install date, language, timezone, ips and users
-  - otheroutput of different plugins (TODO)
+  - other output of different plugins (TODO)
