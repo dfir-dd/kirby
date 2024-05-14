@@ -20,14 +20,15 @@ def logger():
 def arguments():
     parser = argparse.ArgumentParser(
         prog="kirby",
-        description="create a timeline of a windows image, using dissect"
+        description="parse forensic artifacts from windows images, using dissect"
     )
-    parser.add_argument('image_path')
+    parser.add_argument('targets', metavar="TARGETS", nargs="+", help="Path to single target or directory with multiple targets to parse")
     parser.add_argument('--overwrite', action='store_true', help='overwrite destination directory')
     parser.add_argument('--dialect',
                         choices=csv.list_dialects(),
                         default='unix',
                         help='select CSV dialect')
+    
     args = parser.parse_args()
 
     return args

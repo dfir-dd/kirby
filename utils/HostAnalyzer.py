@@ -3,25 +3,43 @@ import shutil
 import sys
 import traceback
 
-from dissect.target import Target
-from dissect.target.exceptions import UnsupportedPluginError
 from flow.record.adapter.csvfile import CsvfileWriter
+from dissect.target import Target
+from dissect.target.exceptions import TargetError
+from dissect.target.exceptions import UnsupportedPluginError
 from dissect.target.helpers.record import TargetRecordDescriptor
-
+from dissect.target.tools.query import record_output
 from dissect.target.tools.info import (
     get_target_info
 )
 
-from utils import TxtFile
 from utils.cli import logger
 
+# changed "ips" type from "net.ipaddress[]" to "strings[]" from original dissect InfoRecord
+InfoRecord = TargetRecordDescriptor(
+    "target/info",
+    [
+        ("datetime", "last_activity"),
+        ("datetime", "install_date"),
+        ("string[]", "ips"),
+        ("string", "os_family"),
+        ("string", "os_version"),
+        ("string", "architecture"),
+        ("string[]", "language"),
+        ("string", "timezone"),
+        ("string[]", "disks"),
+        ("string[]", "volumes"),
+        ("string[]", "children"),
+    ],
+)
+
 class HostAnalyzer:
-    def __init__(self, image_path: str, overwrite: bool = False):
+    
+    def __init__(self, targets: list, overwrite: bool = False):
         super(HostAnalyzer, self).__init__()
-        self.__target = Target.open(image_path)
-        self.__target.apply()
+        
         self.__overwrite = overwrite
-        self.__dst_dir = self.__create_destination_directory()
+        self.__targets = targets
         self.__PLUGINS = [
             "amcache_install",
             "adpolicy",
@@ -62,13 +80,34 @@ class HostAnalyzer:
             ##"usnjrnl" # takes a lot of time
         ]
 
-    def invoke_plugins(self):
-        for plugin in self.__PLUGINS:
-            self.invoke_plugin(plugin)
+        
+    # will enumerate all targets and create hostinfo as well as invoke all plugins for each target     
+    def analyze_targets(self):
+        filename = "hostinfo.csv"
+        writer = CsvfileWriter(filename,
+                               exclude=["_generated", "_source", "_classification", "_version"])
 
-    def invoke_plugin(self, plugin):
         try:
-            target = self.__target
+            for target in Target.open_all(self.__targets):
+                try:
+                    self.__dst_dir = self.__create_destination_directory(target)
+                    record = InfoRecord(**get_target_info(target), _target=target)
+                    writer.write(record)
+                    self.__write_target_info(target)
+                    self.invoke_plugins(target)
+                except Exception as e:
+                    target.log.error(f"Exception in retrieving information for target: `%s`.: {e}", target)
+        except TargetError as e:
+            logger().error(e)
+
+
+    def invoke_plugins(self, target: Target):
+        for plugin in self.__PLUGINS:
+            self.invoke_plugin(target, plugin)
+
+
+    def invoke_plugin(self, target, plugin):
+        try:
             filename = plugin
             if isinstance(plugin, tuple):
                 filename = "_".join(plugin)
@@ -86,6 +125,7 @@ class HostAnalyzer:
             tb_str = traceback.format_exc()
             logger().error(f"{plugin}: An unexpected error occurred:\r\n {tb_str}")
 
+
     def write_csv(self, filename, records):
         if not filename.endswith(".csv"):
             filename += ".csv"
@@ -97,9 +137,10 @@ class HostAnalyzer:
             #logger().info(f"Enty {entry} in Records {records}")
             writer.write(entry)
 
-    def __create_destination_directory(self):
-        logger().info(f"found image with hostname '{self.__target.hostname}'; creating target directory for it")
-        dst = os.path.join(os.curdir, self.__target.hostname)
+
+    def __create_destination_directory(self, target: Target):
+        logger().info(f"found image with hostname '{target.hostname}'; creating target directory for it")
+        dst = os.path.join(os.curdir, target.hostname)
         if os.path.exists(dst):
             if self.__overwrite:
                 logger().info(f"target directory '{dst}' exists already, deleting it")
@@ -109,35 +150,16 @@ class HostAnalyzer:
                 sys.exit(1)
         os.makedirs(dst)
         return dst
-          
-    def write_target_info(self):
 
-        # changed "ips" type from "net.ipaddress[]" to "strings[]" from original dissect InfoRecord
-        InfoRecord = TargetRecordDescriptor(
-            "target/info",
-            [
-                ("datetime", "last_activity"),
-                ("datetime", "install_date"),
-                ("string[]", "ips"),
-                ("string", "os_family"),
-                ("string", "os_version"),
-                ("string", "architecture"),
-                ("string[]", "language"),
-                ("string", "timezone"),
-                ("string[]", "disks"),
-                ("string[]", "volumes"),
-                ("string[]", "children"),
-            ],
-        )
-          
+
+    def __write_target_info(self, target: Target):
+        
         try:
-            record = InfoRecord(**get_target_info(self.__target), _target=self.__target)
-            filename = "hostinfo.csv"
+            record = InfoRecord(**get_target_info(target), _target=target)
+            filename = f"hostinfo_{target.hostname}.csv"
             writer = CsvfileWriter(os.path.join(self.__dst_dir, filename),
                                exclude=["_generated", "_source", "_classification", "_version"])
             writer.write(record)
-
         except Exception as e:
             logger().error(e)
-            logger().debug("", exc_info=e)
 
