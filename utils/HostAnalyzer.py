@@ -41,44 +41,62 @@ class HostAnalyzer:
         self.__targets = targets
         self.__output_directory = output
         self.__PLUGINS = [
-            "amcache_install",
-            "adpolicy",
-            "sophos",
-            "mcafee",
-            "trendmicro",
-            #"symantec" # => Error
+            # antivirus
             #("defender", "evtx"), => unsightly output -> better with evtx2bodyfile/mactime2
-            ("anydesk", "logs"), 
-            ("teamviewer", "logs"), 
-            "powershell_history",
-            "prefetch",
-            "runkeys",
-            "usb",
-            "users",
-            "userassist",
-            "firewall",
-            "adpolicy",
-            "shimcache",
-            # "evtx", # => unsightly output -> better with evtx2bodyfile/mactime2
-            "muicache",
-            # "user_details", # SEGV
-            "activitiescache",
-            "bam",
-            "services",
-            "shellbags",
-            "shimcache",
-            "startupinfo",
-            "tasks",
-            "trusteddocs",
+            "mcafee",
+            "sophos",
+            ("symantec", "logs"),
+            ("trendmicro" , "wflogs"),
+            # browser history
             ("edge", "history"),
             ("chrome", "history"),
             ("firefox", "history"),
             ("iexplore", "history"),
-            ##"lnk", # => Error
-            ## "mft", # => unsightly output -> better with mft2bodyfile/mactime2
-            ##"wer", # https://github.com/fox-it/acquire/pull/66
-            ##"usnjrnl" # takes a lot of time
+            # remoteaccess
+            ("anydesk", "logs"), 
+            ("teamviewer", "logs"),
+            # powershell
+            "powershell_history", 
         ]
+        # self.__PLUGINS = [
+        #     "amcache_install",
+        #     "adpolicy",
+        #     "sophos",
+        #     "mcafee",
+        #     "trendmicro",
+        #     #"symantec" # => Error
+        #     #("defender", "evtx"), => unsightly output -> better with evtx2bodyfile/mactime2
+        #     ("anydesk", "logs"), 
+        #     ("teamviewer", "logs"), 
+        #     "powershell_history",
+        #     "prefetch",
+        #     "runkeys",
+        #     "usb",
+        #     "users",
+        #     "userassist",
+        #     "firewall",
+        #     "adpolicy",
+        #     "shimcache",
+        #     # "evtx", # => unsightly output -> better with evtx2bodyfile/mactime2
+        #     "muicache",
+        #     # "user_details", # SEGV
+        #     "activitiescache",
+        #     "bam",
+        #     "services",
+        #     "shellbags",
+        #     "shimcache",
+        #     "startupinfo",
+        #     "tasks",
+        #     "trusteddocs",
+        #     ("edge", "history"),
+        #     ("chrome", "history"),
+        #     ("firefox", "history"),
+        #     ("iexplore", "history"),
+        #     ##"lnk", # => Error
+        #     ## "mft", # => unsightly output -> better with mft2bodyfile/mactime2
+        #     ##"wer", # https://github.com/fox-it/acquire/pull/66
+        #     ##"usnjrnl" # takes a lot of time
+        # ]
 
         
     # will enumerate all targets and create hostinfo as well as invoke all plugins for each target     
