@@ -37,6 +37,7 @@ class HostAnalyzer:
     
     def __init__(self, targets: list, overwrite: bool = False):
         super(HostAnalyzer, self).__init__()
+        
         self.__overwrite = overwrite
         self.__targets = targets
         self.__PLUGINS = [
