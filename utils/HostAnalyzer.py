@@ -35,11 +35,13 @@ InfoRecord = TargetRecordDescriptor(
 
 class HostAnalyzer:
     
-    def __init__(self, targets: str, output:str, overwrite: bool = False):
+    def __init__(self, targets: list, output: str, overwrite: bool = False):
         super(HostAnalyzer, self).__init__()
-        self.__overwrite = overwrite
+        
+        
         self.__targets = targets
-        self.__output_directory = output
+        self.__output = output
+        self.__overwrite = overwrite
         self.__PLUGINS = [
             # antivirus
             #("defender", "evtx"), => unsightly output -> better with evtx2bodyfile/mactime2
@@ -102,16 +104,16 @@ class HostAnalyzer:
     # will enumerate all targets and create hostinfo as well as invoke all plugins for each target     
     def analyze_targets(self):
         filename = "hostinfo.csv"
-        writer = CsvfileWriter(os.path.join(self.__output_directory, filename),
+        writer = CsvfileWriter(os.path.join(self.__output, filename),
                                exclude=["_generated", "_source", "_classification", "_version"])
 
         try:
-            for i, target in enumerate(Target.open_all(self.__targets)):
+            for target in Target.open_all(self.__targets):
                 try:
                     self.__dst_dir = self.__create_destination_directory(target)
                     record = InfoRecord(**get_target_info(target), _target=target)
                     writer.write(record)
-                    self.write_target_info(target)
+                    self.__write_target_info(target)
                     self.invoke_plugins(target)
                 except Exception as e:
                     target.log.error(f"Exception in retrieving information for target: `%s`.: {e}", target)
@@ -158,7 +160,7 @@ class HostAnalyzer:
 
     def __create_destination_directory(self, target: Target):
         logger().info(f"found image with hostname '{target.hostname}'; creating target directory for it")
-        dst = os.path.join(self.__output_directory, target.hostname)
+        dst = os.path.join(self.__output, target.hostname)
         if os.path.exists(dst):
             if self.__overwrite:
                 logger().info(f"target directory '{dst}' exists already, deleting it")
@@ -170,12 +172,12 @@ class HostAnalyzer:
         return dst
 
 
-    def write_target_info(self, target: Target):
+    def __write_target_info(self, target: Target):
         
         try:
             record = InfoRecord(**get_target_info(target), _target=target)
-            filename = "hostinfo_" + target.hostname + ".csv"
-            writer = CsvfileWriter(os.path.join(self.__output_directory, self.__dst_dir, filename),
+            filename = f"hostinfo_{target.hostname}.csv"
+            writer = CsvfileWriter(os.path.join(self.__dst_dir, filename),
                                exclude=["_generated", "_source", "_classification", "_version"])
             writer.write(record)
         except Exception as e:
