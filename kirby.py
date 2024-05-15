@@ -7,7 +7,7 @@ from utils import HostAnalyzer
 def main():
     args = utils.cli.arguments()
 
-    analyzer = HostAnalyzer(args.targets, overwrite=args.overwrite)
+    analyzer = HostAnalyzer(args.targets, args.output, overwrite=args.overwrite)
     analyzer.analyze_targets()
     
 
