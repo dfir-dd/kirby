@@ -85,15 +85,44 @@ class HostAnalyzer:
 
     def analyze_targets(self):
         filename = "hostinfo.csv"
+        helper = "helper.csv"
 
         if os.path.isfile(os.path.join(self.__output, filename)):
-            logger().error(f"The file '{os.path.join(self.__output, filename)}' exists already")
+            logger().info(f"The file '{os.path.join(self.__output, filename)}' exists already, appending new hostinfo data")
             reader = CsvfileReader(os.path.join(self.__output, filename))
-            writer = CsvfileWriter(os.path.join(self.__output, filename),
-                                    exclude=["_generated", "_source", "_classification", "_version"])
+            records = []
             for record in reader.__iter__():
-                writer.write(record)
-            self.__enumerate_targets(writer)
+                records.append(record)
+
+            try:
+                """write newly acquired hostinfo data into a helper.csv file before reading and writing it again into the hostinfo. This is necessary to form a uniform record construct from type csv_reader (prevents having multiple csv head lines in the file)"""
+                writer_h = CsvfileWriter(os.path.join(self.__output, helper),
+                                exclude=["_generated", "_source", "_classification", "_version"])
+                self.__enumerate_targets(writer_h)
+                writer_h.close()
+
+                reader_h = CsvfileReader(os.path.join(self.__output, helper))
+                for record in reader_h.__iter__():
+                    records.append(record)
+
+                writer = CsvfileWriter(os.path.join(self.__output, filename),
+                                    exclude=["_generated", "_source", "_classification", "_version"])
+                for record in records:
+                    writer.write(record)
+                writer.close()
+
+                # remove helper csv file after 
+                if os.path.exists(os.path.join(self.__output, helper)):
+                    try:
+                        os.remove(os.path.join(self.__output, helper))
+                        logger().info(f"File '{os.path.join(self.__output, helper)}' deleted successfully.")
+                    except Exception as e:
+                        logger().error(f"An error occurred while deleting {os.path.join(self.__output, helper)}: {e}")
+                else:
+                    logger().error(f"File '{os.path.join(self.__output, helper)}' not found.")
+            except TargetError as e:
+                    logger().error(e)
+
         else:                
             writer = CsvfileWriter(os.path.join(self.__output, filename),
                                 exclude=["_generated", "_source", "_classification", "_version"])
@@ -111,7 +140,7 @@ class HostAnalyzer:
                     self.__write_target_info(target)
                     self.__invoke_plugins(target)
                 except Exception as e:
-                    target.log.error(f"Exception in retrieving information for target: `%s`.: {e}", target)
+                    logger().error(f"Exception in retrieving information for target: `%s`.: {e}", target)
         except TargetError as e:
                 logger().error(e)
 
