@@ -3,7 +3,7 @@ import shutil
 import sys
 import traceback
 
-from flow.record.adapter.csvfile import CsvfileWriter
+from flow.record.adapter.csvfile import *
 from dissect.target import Target
 from dissect.target.exceptions import TargetError
 from dissect.target.exceptions import UnsupportedPluginError
@@ -82,13 +82,26 @@ class HostAnalyzer:
             ##"usnjrnl" # takes a lot of time
         ]
 
-        
-    # will enumerate all targets and create hostinfo as well as invoke all plugins for each target     
+
     def analyze_targets(self):
         filename = "hostinfo.csv"
-        writer = CsvfileWriter(os.path.join(self.__output, filename),
-                               exclude=["_generated", "_source", "_classification", "_version"])
 
+        if os.path.isfile(os.path.join(self.__output, filename)):
+            logger().error(f"The file '{os.path.join(self.__output, filename)}' exists already")
+            reader = CsvfileReader(os.path.join(self.__output, filename))
+            writer = CsvfileWriter(os.path.join(self.__output, filename),
+                                    exclude=["_generated", "_source", "_classification", "_version"])
+            for record in reader.__iter__():
+                writer.write(record)
+            self.__enumerate_targets(writer)
+        else:                
+            writer = CsvfileWriter(os.path.join(self.__output, filename),
+                                exclude=["_generated", "_source", "_classification", "_version"])
+            self.__enumerate_targets(writer)
+
+
+    # will enumerate all targets and create hostinfo as well as invoke all plugins for each target
+    def __enumerate_targets(self, writer: CsvfileWriter):
         try:
             for target in Target.open_all(self.__targets):
                 try:
@@ -96,19 +109,19 @@ class HostAnalyzer:
                     record = InfoRecord(**get_target_info(target), _target=target)
                     writer.write(record)
                     self.__write_target_info(target)
-                    self.invoke_plugins(target)
+                    self.__invoke_plugins(target)
                 except Exception as e:
                     target.log.error(f"Exception in retrieving information for target: `%s`.: {e}", target)
         except TargetError as e:
-            logger().error(e)
+                logger().error(e)
 
 
-    def invoke_plugins(self, target: Target):
+    def __invoke_plugins(self, target: Target):
         for plugin in self.__PLUGINS:
-            self.invoke_plugin(target, plugin)
+            self.__invoke_plugin(target, plugin)
 
 
-    def invoke_plugin(self, target, plugin):
+    def __invoke_plugin(self, target, plugin):
         try:
             filename = plugin
             if isinstance(plugin, tuple):
@@ -119,7 +132,7 @@ class HostAnalyzer:
 
             assert isinstance(plugin, str)
             records = getattr(target, plugin)()
-            self.write_csv(filename, records)
+            self.__write_csv(filename, records)
             logger().info(f"run of {plugin} was successful")
         except UnsupportedPluginError as e:
             logger().warning(f"{plugin}: {e.root_cause_str()}")
@@ -128,7 +141,7 @@ class HostAnalyzer:
             logger().error(f"{plugin}: An unexpected error occurred:\r\n {tb_str}")
 
 
-    def write_csv(self, filename, records):
+    def __write_csv(self, filename, records):
         if not filename.endswith(".csv"):
             filename += ".csv"
 
