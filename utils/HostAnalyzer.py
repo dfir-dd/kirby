@@ -8,7 +8,6 @@ from dissect.target import Target
 from dissect.target.exceptions import TargetError
 from dissect.target.exceptions import UnsupportedPluginError
 from dissect.target.helpers.record import TargetRecordDescriptor
-from dissect.target.tools.query import record_output
 from dissect.target.tools.info import (
     get_target_info
 )
@@ -87,8 +86,8 @@ class HostAnalyzer:
         filename = "hostinfo.csv"
         helper = "helper.csv"
 
-        if os.path.isfile(os.path.join(self.__output, filename)):
-            logger().info(f"The file '{os.path.join(self.__output, filename)}' exists already, appending new hostinfo data")
+        if os.path.isfile(os.path.join(self.__output, filename)) and os.path.getsize(os.path.join(self.__output, filename)) > 0:
+            logger().info(f"The file '{os.path.join(self.__output, filename)}' already exists, appending new hostinfo data")
             reader = CsvfileReader(os.path.join(self.__output, filename))
             records = []
             for record in reader.__iter__():
@@ -129,7 +128,7 @@ class HostAnalyzer:
             self.__enumerate_targets(writer)
 
 
-    # will enumerate all targets and create hostinfo as well as invoke all plugins for each target
+    # will enumerate all targets and create hostinfo.csv as well as invoke all plugins for each target
     def __enumerate_targets(self, writer: CsvfileWriter):
         try:
             for target in Target.open_all(self.__targets):
@@ -178,7 +177,6 @@ class HostAnalyzer:
                                exclude=["hostname", "domain", "_generated", "_source", "_classification", "_version"])
 
         for entry in records:
-            #logger().info(f"Enty {entry} in Records {records}")
             writer.write(entry)
 
 
