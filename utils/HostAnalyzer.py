@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 import sys
@@ -8,7 +9,6 @@ from dissect.target import Target
 from dissect.target.exceptions import TargetError
 from dissect.target.exceptions import UnsupportedPluginError
 from dissect.target.helpers.record import TargetRecordDescriptor
-from dissect.target.tools.query import record_output
 from dissect.target.tools.info import (
     get_target_info
 )
@@ -82,33 +82,47 @@ class HostAnalyzer:
             ##"usnjrnl" # takes a lot of time
         ]
 
-        
-    # will enumerate all targets and create hostinfo as well as invoke all plugins for each target     
+
     def analyze_targets(self):
         filename = "hostinfo.csv"
-        writer = CsvfileWriter(os.path.join(self.__output, filename),
-                               exclude=["_generated", "_source", "_classification", "_version"])
+        fieldnames = ['hostname', 'domain', 'last_activity', 'install_date', 'ips', 'os_family', 'os_version', 'architecture', 'language', 'timezone', 'disks', 'volumes', 'children', '_generated', '_source']
 
+        if os.path.isfile(os.path.join(self.__output, filename)) and os.path.getsize(os.path.join(self.__output, filename)) > 0:
+            logger().info(f"The file '{os.path.join(self.__output, filename)}' already exists, appending new hostinfo data")
+            with open(os.path.join(self.__output, filename), 'a', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                self.__enumerate_targets(writer)
+
+        else:                
+            with open(os.path.join(self.__output, filename), "w", newline="") as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+                writer.writeheader()
+                self.__enumerate_targets(writer)
+
+
+    # will enumerate all targets and create hostinfo.csv as well as invoke all plugins for each target
+    def __enumerate_targets(self, writer):
         try:
             for target in Target.open_all(self.__targets):
                 try:
                     self.__dst_dir = self.__create_destination_directory(target)
                     record = InfoRecord(**get_target_info(target), _target=target)
-                    writer.write(record)
+                    rdict = record._asdict(fields=writer.fieldnames)
+                    writer.writerow(rdict)
                     self.__write_target_info(target)
-                    self.invoke_plugins(target)
+                    self.__invoke_plugins(target)
                 except Exception as e:
-                    target.log.error(f"Exception in retrieving information for target: `%s`.: {e}", target)
+                    logger().error(f"Exception in retrieving information for target: `%s`.: {e}", target)
         except TargetError as e:
-            logger().error(e)
+                logger().error(e)
 
 
-    def invoke_plugins(self, target: Target):
+    def __invoke_plugins(self, target: Target):
         for plugin in self.__PLUGINS:
-            self.invoke_plugin(target, plugin)
+            self.__invoke_plugin(target, plugin)
 
 
-    def invoke_plugin(self, target, plugin):
+    def __invoke_plugin(self, target, plugin):
         try:
             filename = plugin
             if isinstance(plugin, tuple):
@@ -119,7 +133,7 @@ class HostAnalyzer:
 
             assert isinstance(plugin, str)
             records = getattr(target, plugin)()
-            self.write_csv(filename, records)
+            self.__write_csv(filename, records)
             logger().info(f"run of {plugin} was successful")
         except UnsupportedPluginError as e:
             logger().warning(f"{plugin}: {e.root_cause_str()}")
@@ -128,7 +142,7 @@ class HostAnalyzer:
             logger().error(f"{plugin}: An unexpected error occurred:\r\n {tb_str}")
 
 
-    def write_csv(self, filename, records):
+    def __write_csv(self, filename, records):
         if not filename.endswith(".csv"):
             filename += ".csv"
 
@@ -136,7 +150,6 @@ class HostAnalyzer:
                                exclude=["hostname", "domain", "_generated", "_source", "_classification", "_version"])
 
         for entry in records:
-            #logger().info(f"Enty {entry} in Records {records}")
             writer.write(entry)
 
 
