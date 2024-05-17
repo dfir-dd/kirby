@@ -1,9 +1,10 @@
+import csv
 import os
 import shutil
 import sys
 import traceback
 
-from flow.record.adapter.csvfile import *
+from flow.record.adapter.csvfile import CsvfileWriter
 from dissect.target import Target
 from dissect.target.exceptions import TargetError
 from dissect.target.exceptions import UnsupportedPluginError
@@ -84,58 +85,30 @@ class HostAnalyzer:
 
     def analyze_targets(self):
         filename = "hostinfo.csv"
-        helper = "helper.csv"
+        fieldnames = ['hostname', 'domain', 'last_activity', 'install_date', 'ips', 'os_family', 'os_version', 'architecture', 'language', 'timezone', 'disks', 'volumes', 'children', '_generated', '_source']
 
         if os.path.isfile(os.path.join(self.__output, filename)) and os.path.getsize(os.path.join(self.__output, filename)) > 0:
             logger().info(f"The file '{os.path.join(self.__output, filename)}' already exists, appending new hostinfo data")
-            reader = CsvfileReader(os.path.join(self.__output, filename))
-            records = []
-            for record in reader.__iter__():
-                records.append(record)
-
-            try:
-                """write newly acquired hostinfo data into a helper.csv file before reading and writing it again into the hostinfo. This is necessary to form a uniform record construct from type csv_reader (prevents having multiple csv head lines in the file)"""
-                writer_h = CsvfileWriter(os.path.join(self.__output, helper),
-                                exclude=["_generated", "_source", "_classification", "_version"])
-                self.__enumerate_targets(writer_h)
-                writer_h.close()
-
-                reader_h = CsvfileReader(os.path.join(self.__output, helper))
-                for record in reader_h.__iter__():
-                    records.append(record)
-
-                writer = CsvfileWriter(os.path.join(self.__output, filename),
-                                    exclude=["_generated", "_source", "_classification", "_version"])
-                for record in records:
-                    writer.write(record)
-                writer.close()
-
-                # remove helper csv file after 
-                if os.path.exists(os.path.join(self.__output, helper)):
-                    try:
-                        os.remove(os.path.join(self.__output, helper))
-                        logger().info(f"File '{os.path.join(self.__output, helper)}' deleted successfully.")
-                    except Exception as e:
-                        logger().error(f"An error occurred while deleting {os.path.join(self.__output, helper)}: {e}")
-                else:
-                    logger().error(f"File '{os.path.join(self.__output, helper)}' not found.")
-            except TargetError as e:
-                    logger().error(e)
+            with open(os.path.join(self.__output, filename), 'a', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                self.__enumerate_targets(writer)
 
         else:                
-            writer = CsvfileWriter(os.path.join(self.__output, filename),
-                                exclude=["_generated", "_source", "_classification", "_version"])
-            self.__enumerate_targets(writer)
+            with open(os.path.join(self.__output, filename), "w", newline="") as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+                writer.writeheader()
+                self.__enumerate_targets(writer)
 
 
     # will enumerate all targets and create hostinfo.csv as well as invoke all plugins for each target
-    def __enumerate_targets(self, writer: CsvfileWriter):
+    def __enumerate_targets(self, writer):
         try:
             for target in Target.open_all(self.__targets):
                 try:
                     self.__dst_dir = self.__create_destination_directory(target)
                     record = InfoRecord(**get_target_info(target), _target=target)
-                    writer.write(record)
+                    rdict = record._asdict(fields=writer.fieldnames)
+                    writer.writerow(rdict)
                     self.__write_target_info(target)
                     self.__invoke_plugins(target)
                 except Exception as e:
