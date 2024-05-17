@@ -4,7 +4,7 @@ A cute script to parse several forensic artifacts of given windows (triage) imag
 ## Usage
 
 ```
-usage: kirby [-h] -o OUTPUT [--overwrite] [--dialect {excel,excel-tab,unix}] TARGETS [TARGETS ...]
+usage: kirby [-h] -o OUTPUT [--overwrite] TARGETS [TARGETS ...]
 
 parse forensic artifacts from windows images, using dissect
 
@@ -16,8 +16,6 @@ options:
   -o OUTPUT, --output OUTPUT
                         Specify the output directory
   --overwrite           overwrite destination directory
-  --dialect {excel,excel-tab,unix}
-                        select CSV dialect
 ```
 
 ## Output
