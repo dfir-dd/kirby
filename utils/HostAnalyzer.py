@@ -43,43 +43,89 @@ class HostAnalyzer:
         self.__output = output
         self.__overwrite = overwrite
         self.__PLUGINS = [
-            "amcache_install",
-            "adpolicy",
-            "sophos",
-            "mcafee",
-            "trendmicro",
-            #"symantec" # => Error
-            #("defender", "evtx"), => unsightly output -> better with evtx2bodyfile/mactime2
-            ("anydesk", "logs"), 
-            ("teamviewer", "logs"), 
-            "powershell_history",
-            "prefetch",
-            "runkeys",
-            "usb",
-            "users",
-            "userassist",
-            "firewall",
-            "adpolicy",
-            "shimcache",
-            # "evtx", # => unsightly output -> better with evtx2bodyfile/mactime2
-            "muicache",
-            # "user_details", # SEGV
-            "activitiescache",
-            "bam",
-            "services",
-            "shellbags",
-            "shimcache",
-            "startupinfo",
-            "tasks",
-            "trusteddocs",
+            # This list does not include all available dissect plugins, ether because they could not be fully tested (lacking of testdata) or lead to errors (see end of list)
+            ("defender", "exclusions"),
+            ("defender", "quarantine"),
+            ("mcafee", "msc"),
+            ("sophos", "hitmanlogs"),
+            ("sophos", "sophoshomelogs"),
+            ("symantec", "firewall"),
+            ("symantec", "logs"),
+            ("trendmicro" , "wffirewall"),
+            ("trendmicro" , "wflogs"),
             ("edge", "history"),
             ("chrome", "history"),
             ("firefox", "history"),
             ("iexplore", "history"),
-            ##"lnk", # => Error
-            ## "mft", # => unsightly output -> better with mft2bodyfile/mactime2
-            ##"wer", # https://github.com/fox-it/acquire/pull/66
-            ##"usnjrnl" # takes a lot of time
+            ("brave", "history"),
+            ("chrome", "downloads"),
+            ("edge", "downloads"),
+            ("firefox", "downloads"),
+            ("iexplore", "downloads"),
+            ("brave", "downloads"),
+            ("chrome", "extensions"), 
+            ("edge", "extensions"),
+            ("firefox", "extensions"),
+            ("brave", "extensions"),
+            ("anydesk", "logs"), 
+            ("teamviewer", "logs"),
+            "powershell_history",
+            ("amcache", "application_files"),
+            ("amcache", "applications"),
+            ("amcache", "device_containers"),
+            ("amcache", "drivers"),
+            ("amcache", "shortcuts"),
+            ("cim", "consumerbindings"),# plugin needs to be adapted in order to correctly read ActiveScriptConsumer information
+            "alternateshell",
+            "bootshell",
+            ("notifications", "wpndatabase"),
+            "prefetch",
+            "recyclebin",
+            "sevenzip", # the csv output will contain multiple headers, as the plugin produces non valid csv format, however the headers are the same and do not vary, therefore it is still included, maybe use "sort -ru" to work with the resulting csv
+            "auditpol",
+            "bam",
+            ("clsid", "machine"),
+            ("clsid", "user"),
+            ("mru", "acmru"),
+            ("mru", "msoffice"),
+            ("mru", "mstsc"),
+            ("mru", "networkdrive"),
+            ("mru", "recentdocs"),
+            ("mru", "run"),
+            "network_history",
+            "runkeys",
+            "shellbags",
+            "usb",
+            "userassist",
+            "sam",
+            "services",
+            "startupinfo",
+            "wer",
+        ### The following plugins are not included, as they tend to throw errors or produce invalid csv output format
+        #     "amcache_install", # => no valid csv format
+        #     "symantec" # => Error
+        #     ("defender", "evtx"), => unsightly output -> better with evtx2bodyfile/mactime2
+        #     "shimcache", # => no valid csv format in output, some lines are oddly separated
+        #      "evtx", # => unsightly output -> better with evtx2bodyfile/mactime2
+        #     "muicache", # strange output format
+        #     "user_details", # SEGV
+        #     "activitiescache", # => unsightly output, sometimes entries are not in valid csv format
+        #     "tasks", # => not a valid csv format
+        #     "lnk", # => Error
+        #     "mft", # => no valid csv format, unsightly output, slow -> better with mft2bodyfile/mactime2
+        #     "usnjrnl", # takes a lot of time
+        #     "walkfs", # => Throws errors during runtime AttributeError,TypeError
+        #     ("etl","boot"), # => not valid csv format
+        #     ("etl","etl") # => not valid csv format
+        #     ("etl","shutdown") # => not valid csv format
+        #     "pfro", # some lines of the input file are not parsed correctly, artifact is also not really relevant
+        #     "schdlgu", # => ValueError
+        #     ("cit", "dp"), # not valid csv format
+        #     "firewall", # not valid csv format
+        #     ("mru", "opensave"), # does only check opensave key for Win XP, not modern OpenSavePIDLMRU key
+        #     ("mru", "lastvisited"), # does only check lastvisited key for Win XP, not modern LastVisitedPIDLMRU key
+        #     ("thumbcache", "iconcache"), # => error
+        #     ("thumbcache", "thumbcache"), # => not a valid csv format
         ]
 
 
@@ -110,19 +156,19 @@ class HostAnalyzer:
                     rdict = record._asdict(fields=writer.fieldnames)
                     writer.writerow(rdict)
                     self.__write_target_info(target)
-                    self.__invoke_plugins(target)
+                    self.invoke_plugins(target)
                 except Exception as e:
                     logger().error(f"Exception in retrieving information for target: `%s`.: {e}", target)
         except TargetError as e:
                 logger().error(e)
 
 
-    def __invoke_plugins(self, target: Target):
+    def invoke_plugins(self, target: Target):
         for plugin in self.__PLUGINS:
-            self.__invoke_plugin(target, plugin)
+            self.invoke_plugin(target, plugin)
 
 
-    def __invoke_plugin(self, target, plugin):
+    def invoke_plugin(self, target, plugin):
         try:
             filename = plugin
             if isinstance(plugin, tuple):
