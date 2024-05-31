@@ -1,5 +1,10 @@
+<div align="center">
+  <p>
+    <img alt="Kirby Logo" width="20%" src="images/kirby_fox_transparent.png" />
+  </p>
+</div>
+
 # kirby
-<img align="right" width="64px" src="images/kirby_fox_transparent.png" />
 
 A cute script to parse several forensic artifacts of given windows (triage) images, using [dissect](https://github.com/fox-it/dissect).
 
