@@ -1,5 +1,6 @@
 # kirby
-A cute script to parse several forensic artifacts of given windows (triage) images, using dissect
+<img align="right" width="64px" src="images/kirby_fox_transparent.png" />
+A cute script to parse several forensic artifacts of given windows (triage) images, using [dissect](https://github.com/fox-it/dissect)
 
 ## Usage
 
@@ -23,4 +24,4 @@ options:
 - hostinfo.csv - hostinfo of all targets parsed
 - Directory (named by the hostname of the image) including:
   - hostinfo_\<hostname\>.csv - with information of hostname, domain, windows version, install date, language, timezone, ips and users
-  - other output of different plugins (TODO)
+  - other output of different dissect plugins
