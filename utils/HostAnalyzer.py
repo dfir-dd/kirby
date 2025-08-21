@@ -101,6 +101,7 @@ class HostAnalyzer:
             "services",
             "startupinfo",
             "wer",
+            "wua_history",
         ### The following plugins are not included, as they tend to throw errors or produce invalid csv output format
         #     "amcache_install", # => no valid csv format
         #     "symantec" # => Error
