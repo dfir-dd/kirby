@@ -8,30 +8,13 @@ from flow.record.adapter.csvfile import CsvfileWriter
 from dissect.target import Target
 from dissect.target.exceptions import TargetError
 from dissect.target.exceptions import UnsupportedPluginError
-from dissect.target.helpers.record import TargetRecordDescriptor
+
 from dissect.target.tools.info import (
-    get_target_info
+    get_target_info,
+    InfoRecord
 )
 
 from utils.cli import logger
-
-# changed "ips" type from "net.ipaddress[]" to "strings[]" from original dissect InfoRecord
-InfoRecord = TargetRecordDescriptor(
-    "target/info",
-    [
-        ("datetime", "last_activity"),
-        ("datetime", "install_date"),
-        ("string[]", "ips"),
-        ("string", "os_family"),
-        ("string", "os_version"),
-        ("string", "architecture"),
-        ("string[]", "language"),
-        ("string", "timezone"),
-        ("string[]", "disks"),
-        ("string[]", "volumes"),
-        ("string[]", "children"),
-    ],
-)
 
 class HostAnalyzer:
     
