@@ -115,7 +115,7 @@ class HostAnalyzer:
 
     def analyze_targets(self):
         filename = "hostinfo.csv"
-        fieldnames = ['hostname', 'domain', 'last_activity', 'install_date', 'ips', 'os_family', 'os_version', 'architecture', 'language', 'timezone', 'disks', 'volumes', 'children', '_generated', '_source']
+        fieldnames = list(InfoRecord.get_all_fields().keys())
 
         if os.path.isfile(os.path.join(self.__output, filename)) and os.path.getsize(os.path.join(self.__output, filename)) > 0:
             logger().info(f"The file '{os.path.join(self.__output, filename)}' already exists, appending new hostinfo data")
@@ -191,7 +191,7 @@ class HostAnalyzer:
                 logger().info(f"target directory '{dst}' exists already, deleting it")
                 shutil.rmtree(dst)
             else:
-                logger().error(f"target directory '{dst}' exists already, exiting")
+                logger().error(f"target directory '{dst}' exists already, exiting. Run with --overwrite, in order to overwrite it.")
                 sys.exit(1)
         os.makedirs(dst)
         return dst
