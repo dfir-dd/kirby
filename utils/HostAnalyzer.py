@@ -51,7 +51,7 @@ class HostAnalyzer:
             ("firefox", "extensions"),
             ("brave", "extensions"),
             ("anydesk", "logs"), 
-            ("teamviewer", "logs"),
+            #("teamviewer", "logs"), plugin has currently issues with conversion of the timestamps to utc, see https://github.com/fox-it/dissect.target/issues/1488
             "powershell_history",
             ("amcache", "application_files"),
             ("amcache", "applications"),
